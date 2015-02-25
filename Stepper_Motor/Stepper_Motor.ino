@@ -1,3 +1,14 @@
+/**************************************************************
+ File:     Stepper_Motor.ino
+ Contents: This program demonstrates the use of the software
+           for driving the stepper motor using the Pulse
+           library provided by the ME 210 staff. After 
+           setting up an initial timer, the program reads
+           in a voltage from a potentiometer and sends
+           that value as a pulse in a predefined period.
+           After a particular time has passed, the stepper
+           will then rotate in the opposite direction.
+
 /*---------------- Headers---- ---------------------------*/
 #include <Pulse.h>
 #include <Timers.h>
@@ -9,9 +20,9 @@
 #define High       1
 
 /*---------------- Time -----------------------------------*/
-#define degree     45
-#define whole_time 5
-#define period     10
+#define whole_time 3      // In seconds
+#define period     10     // 1/10 of ms
+#define ticks      1000   // 1000 ticks = 1 sec
 
 /*---------------- Arduino Main Functions -------------------*/
 
@@ -20,8 +31,9 @@ void setup() {
   Serial.println("Starting Arduino.");
   pinMode(A0, INPUT);           // sets the analog pin as input
   pinMode(DirPin, OUTPUT);      // sets the digital pin as output
-  // Setup timer
-  TMRArd_InitTimer(0,1000);
+  // Setup initial timer
+  TMRArd_InitTimer(0,ticks);    // set timer
+  InitPulse(StepPin, period);   // Initialize the pulse
 }
 
 void loop() {
@@ -41,23 +53,23 @@ void loop() {
     }
   }  
   
+  // Rotate in a certain direction until the timer expires
   if (TMRArd_IsTimerExpired(0)) {
-    TMRArd_InitTimer(0,1000*whole_time); // in seconds
+    TMRArd_InitTimer(0,ticks*whole_time); // in seconds
     digitalWrite(DirPin,HIGH);   // Change to High.
   } else {
     digitalWrite(DirPin,LOW);   // Change to Low. 
   }
   
-  unsigned double pulse = (32/1.8)*(degree*whole_time)/(period*10^-4);
-  
+  // Obtain potentiometer reading
   unsigned int val = 0;
   val = analogRead(A0)/10;
   Serial.println(val);
   
-  // Send pulse to stepper motor
+  // Send pulse to stepper motor in a predefined period
   if (IsPulseFinished()) {
   Serial.println("Pulse Finished.");
   InitPulse(StepPin, period); 
-  Pulse(int(pulse)); 
+  Pulse(val); 
   }
 }
