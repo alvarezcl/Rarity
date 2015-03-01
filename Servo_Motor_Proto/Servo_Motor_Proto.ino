@@ -4,13 +4,28 @@
 
 /*---------------- Includes ---------------------------------*/
 #include <Timers.h>
+#include <Servo.h>
 
 /*---------------- Pin Defines ---------------------------*/
-#define EnablePin_1     10   // Connected to E1 (Enable Pin) on L293
-#define DirPin_1        11   // Connected to D1 (Direction Pin) on L293
+#define EnablePin_1     6   // Connected to E1 (Enable Pin) on L293
+#define DirPin_1        7   // Connected to D1 (Direction Pin) on L293
 
 #define EnablePin_2     5   // Connected to E2 (Enable Pin) on L293
-#define DirPin_2        6  // Connected to D2 (Direction Pin) on L293
+#define DirPin_2        4  // Connected to D2 (Direction Pin) on L293
+
+#define ServoPin        12
+#define ServoTimer      2
+#define ServoPeriod     20
+#define AngleLow        90
+#define AngleHigh       110
+
+#define LauncherPin     13
+#define BeaconLowEnter  320
+#define BeaconHighEnter 340
+#define BeaconLowExit   50
+#define BeaconHighExit  1000
+
+
 
 /*---------------- Time ----------------------------------*/
 #define timer           0
@@ -25,14 +40,24 @@
 #define DrivingStraight 12
 #define Stop            13
 #define SlightForward   14
+#define Buckets         15
 
 #define threshold       500
+
+Servo turret;
+static boolean dir = true;
+static int pos = AngleLow;
 
 /*---------------- Arduino Main Functions -------------------*/
 void setup()
 {
   Serial.begin(9600);
   Serial.println("Starting Arduino");
+  
+  turret.attach(ServoPin);
+  attachInterrupt(0,rising,RISING);
+  pinMode(LauncherPin,OUTPUT);
+  
   pinMode(A5, INPUT);                // back left
   pinMode(A4, INPUT);                // back right
   
@@ -47,6 +72,14 @@ void setup()
   digitalWrite(DirPin_1, HIGH);      // Set L293 pin 11 as HIGH (Backward)
   digitalWrite(DirPin_2, HIGH);      // Set L293 pin 6 as HIGH (Backward)
   TMRArd_InitTimer(1,3000);           
+}
+
+unsigned long prev = 0;
+unsigned long diff = 0;
+void rising() {
+  unsigned long temp = micros();
+  diff = temp - prev;
+  prev = temp;
 }
 
 void loop(){
@@ -160,7 +193,7 @@ void loop(){
       digitalWrite(DirPin_2,LOW);  // Right motor is forward
       analogWrite(EnablePin_1, val_1);
       analogWrite(EnablePin_2, val_2);
-      if ((front_right_bump > threshold) && (front_right_bump > threshold)) { // if front_bump is at 5V then it's been hit
+      if ((front_right_bump > threshold) && (front_left_bump > threshold)) { // if front_bump is at 5V then it's been hit
         Serial.println("Front Bump Hit");
         NextState = Stop;
       }
@@ -168,6 +201,22 @@ void loop(){
     case(Stop):
       analogWrite(EnablePin_1, 0);
       analogWrite(EnablePin_2, 0);
+      if ((diff < BeaconLowEnter || diff > BeaconHighEnter) &&
+          (TMRArd_IsTimerExpired(ServoTimer) || !TMRArd_IsTimerActive(ServoTimer))) {
+        turret.write(dir ? pos++ : pos--);
+        if (pos <= AngleLow || pos>=AngleHigh) dir = !dir;
+        TMRArd_InitTimer(ServoTimer,ServoPeriod);
+      } else if (diff > BeaconLowEnter && diff < BeaconHighEnter) NextState = Buckets;
+      Serial.println(diff);
+      break;
+    case (Buckets):
+      digitalWrite(LauncherPin,HIGH);
+      if (diff < BeaconLowExit || diff > BeaconHighExit) {
+        //digitalWrite(LauncherPin,LOW);
+        //NextState = Stop;
+        Serial.println(diff);
+      }
+      //Serial.println(diff);
       break;
     default:
       break;
