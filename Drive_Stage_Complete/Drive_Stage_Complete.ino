@@ -160,7 +160,7 @@ void loop(){
       digitalWrite(DirPin_2,LOW);  // Right motor is forward
       analogWrite(EnablePin_1, val_1);
       analogWrite(EnablePin_2, val_2);
-      if ((front_right_bump > threshold) && (front_right_bump > threshold)) { // if front_bump is at 5V then it's been hit
+      if ((front_right_bump > threshold) && (front_left_bump > threshold)) { // if front_bump is at 5V then it's been hit
         Serial.println("Front Bump Hit");
         NextState = Stop;
       }
