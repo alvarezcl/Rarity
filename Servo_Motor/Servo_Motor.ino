@@ -1,19 +1,25 @@
 #include <Servo.h> 
 #include <Timers.h>
 
-#define period_shooter  10
+#define sensorIR 15
 Servo myservo;  // Creates a servo object
-int pos = 0;    // Variable to store the servos angle 
+volatile float inches;
  
 void setup()
 { 
+  myservo.attach(12);  // Assigns data pin to your servo object, must be digital port
   Serial.begin(9600);
-  pinMode(9,OUTPUT);
-  pinMode(10,OUTPUT);
+  TMRArd_InitTimer(0,20);
 } 
 
+boolean dir = true;
+unsigned int pos = 0;
 void loop()
-{  
-  analogWrite(9,150);
-  analogWrite(10,150);
+{ 
+  if (TMRArd_IsTimerExpired(0)) {
+    myservo.write(dir ? pos++ : pos--);
+    if (pos >= 180 || pos <= 0) dir = !dir;
+    TMRArd_InitTimer(0,20);
+  }
 }
+
