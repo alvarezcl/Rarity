@@ -31,8 +31,8 @@
 #define timer           0
 #define timer_two       1
 #define period          1 // in sec
-#define period_turn     300 // in ticks (1000 ticks = 1 sec)
-#define forward_time    1000 // in ticks
+#define period_turn     30 // in ticks (1000 ticks = 1 sec)
+#define forward_time    500 // in ticks
 
 /*---------------- States ----------------------------------*/
 #define BackingUp       10
@@ -58,17 +58,19 @@ void setup()
   attachInterrupt(0,rising,RISING);
   pinMode(LauncherPin,OUTPUT);
   
-  pinMode(A5, INPUT);                // back left
-  pinMode(A4, INPUT);                // back right
+  pinMode(A1, INPUT);                // front right
+  pinMode(A0, INPUT);                // back right
   
-  pinMode(A1, INPUT);                // front left
-  pinMode(A4, INPUT);                // front right
+  pinMode(A4, INPUT);                // back left
+  pinMode(A5, INPUT);                // front left
    
-  pinMode(A0, INPUT);                // potentiometer reading
-  pinMode(EnablePin_1, OUTPUT);      // sets digital pin 11 as output
-  pinMode(DirPin_1, OUTPUT);         // sets digital pin 10 as output
+  pinMode(A3, INPUT);                // potentiometer reading for wheel calibration
+  pinMode(A2, INPUT);                // potentiometer reading for rotation period
+  
+  pinMode(EnablePin_1, OUTPUT);      // sets digital pin 6 as output
+  pinMode(DirPin_1, OUTPUT);         // sets digital pin 7 as output
   pinMode(EnablePin_2, OUTPUT);      // sets digital pin 5 as output
-  pinMode(DirPin_2, OUTPUT);         // sets digital pin 6 as output
+  pinMode(DirPin_2, OUTPUT);         // sets digital pin 4 as output
   digitalWrite(DirPin_1, HIGH);      // Set L293 pin 11 as HIGH (Backward)
   digitalWrite(DirPin_2, HIGH);      // Set L293 pin 6 as HIGH (Backward)
   TMRArd_InitTimer(1,3000);           
@@ -96,31 +98,32 @@ void loop(){
  
   // back left bumper
   unsigned int front_left_bump = 0;
-  front_left_bump = analogRead(A1);
+  front_left_bump = analogRead(A5);
  
   // back right bumper
   unsigned int front_right_bump = 0;
-  front_right_bump = analogRead(A0);
+  front_right_bump = analogRead(A1);
  
   // back left bumper
   unsigned int back_left_bump = 0;
-  back_left_bump = analogRead(A5);
+  back_left_bump = analogRead(A4);
  
   // back right bumper
   unsigned int back_right_bump = 0;
-  back_right_bump = analogRead(A4);
+  back_right_bump = analogRead(A0);
  
- 
-//----------------------------
+  //----------------------------
  
   // Speed
   unsigned int val_2 = 150;
- 
   unsigned int pot = 0;
   pot = analogRead(A3)/5;
   if (pot > val_2) pot = val_2;
- 
   unsigned int val_1 = val_2-pot;
+  
+  // For the variable time period for rotation
+  unsigned int rot_time = analogRead(A2);
+  rot_time = period_turn;
  
   if (TMRArd_IsTimerExpired(1)) { // for output console
     TMRArd_InitTimer(1,3000);
@@ -171,7 +174,7 @@ void loop(){
       if (TMRArd_IsTimerExpired(timer)) {
         Serial.println("Timer Expired");
         NextState = Turning;
-        TMRArd_InitTimer(timer_two,period_turn);
+        TMRArd_InitTimer(timer_two,rot_time);
       }
       break;
     case(Turning):

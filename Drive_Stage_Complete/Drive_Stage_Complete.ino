@@ -6,11 +6,11 @@
 #include <Timers.h>
 
 /*---------------- Pin Defines ---------------------------*/
-#define EnablePin_1     10   // Connected to E1 (Enable Pin) on L293
-#define DirPin_1        11   // Connected to D1 (Direction Pin) on L293
+#define EnablePin_1     6   // Connected to E1 (Enable Pin) on L293
+#define DirPin_1        7   // Connected to D1 (Direction Pin) on L293
 
 #define EnablePin_2     5   // Connected to E2 (Enable Pin) on L293
-#define DirPin_2        6  // Connected to D2 (Direction Pin) on L293
+#define DirPin_2        4  // Connected to D2 (Direction Pin) on L293
 
 /*---------------- Time ----------------------------------*/
 #define timer           0
@@ -32,18 +32,22 @@
 void setup()
 {
   Serial.begin(9600);
-  Serial.println("Starting Arduino");
-  pinMode(A5, INPUT);                // back left
-  pinMode(A4, INPUT);                // back right
+  Serial.println("Starting Arduino");              
   
-  pinMode(A1, INPUT);                // front left
-  pinMode(A4, INPUT);                // front right
+  pinMode(A1, INPUT);                // front right
+  pinMode(A0, INPUT);                // back right
+  
+  pinMode(A4, INPUT);                // back left
+  pinMode(A5, INPUT);                // front left
+  
    
-  pinMode(A0, INPUT);                // potentiometer reading
+  pinMode(A0, INPUT);                // 
+  
   pinMode(EnablePin_1, OUTPUT);      // sets digital pin 11 as output
   pinMode(DirPin_1, OUTPUT);         // sets digital pin 10 as output
   pinMode(EnablePin_2, OUTPUT);      // sets digital pin 5 as output
   pinMode(DirPin_2, OUTPUT);         // sets digital pin 6 as output
+  
   digitalWrite(DirPin_1, HIGH);      // Set L293 pin 11 as HIGH (Backward)
   digitalWrite(DirPin_2, HIGH);      // Set L293 pin 6 as HIGH (Backward)
   TMRArd_InitTimer(1,3000);           
@@ -63,25 +67,25 @@ void loop(){
  
   // back left bumper
   unsigned int front_left_bump = 0;
-  front_left_bump = analogRead(A1);
+  front_left_bump = analogRead(A5);
  
   // back right bumper
   unsigned int front_right_bump = 0;
-  front_right_bump = analogRead(A0);
+  front_right_bump = analogRead(A1);
  
   // back left bumper
   unsigned int back_left_bump = 0;
-  back_left_bump = analogRead(A5);
+  back_left_bump = analogRead(A4);
  
   // back right bumper
   unsigned int back_right_bump = 0;
-  back_right_bump = analogRead(A4);
+  back_right_bump = analogRead(A0);
  
  
-//----------------------------
+  //----------------------------
  
   // Speed
-  unsigned int val_2 = 150;
+  unsigned int val_2 = 200;
  
   unsigned int pot = 0;
   pot = analogRead(A3)/5;
@@ -104,7 +108,7 @@ void loop(){
     Serial.println("Pot value is");
     Serial.println(pot);
   }
-   
+  
   // Check current state of the bot
   switch(CurrentState) {
     case(BackingUp):
