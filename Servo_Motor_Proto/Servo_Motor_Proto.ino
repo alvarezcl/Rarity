@@ -57,6 +57,7 @@ void setup()
   turret.attach(ServoPin);
   attachInterrupt(0,rising,RISING);
   pinMode(LauncherPin,OUTPUT);
+  digitalWrite(LauncherPin,LOW);
   
   pinMode(A1, INPUT);                // front right
   pinMode(A0, INPUT);                // back right
@@ -202,6 +203,7 @@ void loop(){
       }
       break;
     case(Stop):
+      Serial.println("Stop");
       analogWrite(EnablePin_1, 0);
       analogWrite(EnablePin_2, 0);
       if ((diff < BeaconLowEnter || diff > BeaconHighEnter) &&
@@ -213,6 +215,7 @@ void loop(){
       Serial.println(diff);
       break;
     case (Buckets):
+      Serial.println("Buckets");
       digitalWrite(LauncherPin,HIGH);
       if (diff < BeaconLowExit || diff > BeaconHighExit) {
         //digitalWrite(LauncherPin,LOW);
