@@ -7,34 +7,51 @@
 #include <Servo.h>
 
 /*---------------- Pin Defines ---------------------------*/
+
+// Bumpers
+#define BackRight       10
+#define FrontRight      11
+#define FrontLeft       9
+#define BackLeft        8
+// Threshold for bumper checking
+#define threshold       0
+
+// Motor
 #define EnablePin_1     6   // Connected to E1 (Enable Pin) on L293
 #define DirPin_1        7   // Connected to D1 (Direction Pin) on L293
-
 #define EnablePin_2     5   // Connected to E2 (Enable Pin) on L293
 #define DirPin_2        4  // Connected to D2 (Direction Pin) on L293
 
-#define LauncherPin     13 // Cam pin
+// Cam for Launcher
+#define LauncherPin     3 // Cam pin
 
 /*---------------- Time ----------------------------------*/
+// Timers
 #define timer_one       0
 #define timer_two       1
 #define stall_timer     2
+#define console_timer   3
+#define brb_timer       4
 
-#define console_timer   1
-
-#define period          1 // in sec
-#define period_turn     300 // in ticks (1000 ticks = 1 sec)
+// Time for certain states
+#define period_turn     200 // in ticks (1000 ticks = 1 sec)
 #define forward_time    500 // in ticks
 #define stall_time      1000
 
-// Servo Stuff
-#define ServoPin        11
+/*---------------- Servo ---------------------------------*/
+// BRB Servo
+#define ServoPin        13
 #define ServoTimer      2
-#define ServoPeriod     18
+#define ServoPeriod     20
 #define AngleLow        0
-#define AngleHigh       80
-
-#define divisor         3 // divisor for rotating wheel (how much to divide by for the left wheel to rotate)
+#define AngleHigh       90
+Servo turret;
+static boolean dir = true;
+static int pos = AngleLow;
+// Shooter Servo
+#define ShooterServoPin 12
+Servo shooter;
+#define yaw             156
 
 /*---------------- States ----------------------------------*/
 #define FirstForward    9
@@ -44,12 +61,6 @@
 #define Stop            13
 #define SlightForward   14
 
-#define threshold       500
-
-Servo turret;
-static boolean dir = true;
-static int pos = AngleLow;
-
 /*---------------- Arduino Main Functions -------------------*/
 void setup()
 {
@@ -57,16 +68,16 @@ void setup()
   Serial.println("Starting Arduino");
   pinMode(LauncherPin,OUTPUT);       // Cam
   
-  pinMode(A1, INPUT);                // front right
-  pinMode(A0, INPUT);                // back right
-  
-  pinMode(A4, INPUT);                // back left
-  pinMode(A5, INPUT);                // front left
-   
-  pinMode(A2, INPUT);                // pot
-  pinMode(A3, INPUT);                // pot
+  pinMode(BackRight, INPUT);                 
+  pinMode(FrontRight, INPUT);
+  pinMode(FrontLeft, INPUT);
+  pinMode(BackLeft, INPUT);
   
   turret.attach(ServoPin);
+  turret.write(AngleHigh);
+  
+  shooter.attach(ShooterServoPin);
+  shooter.write(92);
   
   pinMode(EnablePin_1, OUTPUT);      // sets digital pin 6 as output
   pinMode(DirPin_1, OUTPUT);         // sets digital pin 7 as output
@@ -76,7 +87,8 @@ void setup()
   digitalWrite(DirPin_1, HIGH);      // Set L293 pin 7 as HIGH (Backward)
   digitalWrite(DirPin_2, HIGH);      // Set L293 pin 4 as HIGH (Backward)
   
-  TMRArd_InitTimer(console_timer,3000);           
+  TMRArd_InitTimer(console_timer,3000);
+  TMRArd_InitTimer(brb_timer,1000);
 }
 
 void loop(){
@@ -93,32 +105,27 @@ void loop(){
  
   // back left bumper
   unsigned int front_left_bump = 0;
-  front_left_bump = analogRead(A5);
+  front_left_bump = digitalRead(FrontLeft);
  
   // back right bumper
   unsigned int front_right_bump = 0;
-  front_right_bump = analogRead(A1);
+  front_right_bump = digitalRead(FrontRight);
  
   // back left bumper
   unsigned int back_left_bump = 0;
-  back_left_bump = analogRead(A4);
+  back_left_bump = digitalRead(BackLeft);
  
   // back right bumper
   unsigned int back_right_bump = 0;
-  back_right_bump = analogRead(A0);
+  back_right_bump = digitalRead(BackRight);
  
  
   //----------------------------
  
   // Speed
-  unsigned int val_2 = 150;
- 
-  unsigned int pot = 0;
-  pot = analogRead(A3)/5;
-  if (pot > val_2) pot = val_2;
- 
+  unsigned int val_2 = 200; 
   unsigned int val_1 = val_2;
- 
+  
   if (TMRArd_IsTimerExpired(console_timer)) { // for output console
     TMRArd_InitTimer(console_timer,3000);
     Serial.println("Front Right Bumper Reading");
@@ -131,30 +138,32 @@ void loop(){
     Serial.println(back_left_bump);
     Serial.println("Current State is:");
     Serial.println(CurrentState);
-    Serial.println("Pot value is");
-    Serial.println(pot);
   }
+  
   
   // Check current state of the bot
   switch(CurrentState) {
     case(FirstForward):
+      Serial.println("First forward.");
       // Set to backward at some speed
       digitalWrite(DirPin_1,LOW);
       digitalWrite(DirPin_2,LOW);
       // Send a PWM signal with one offset to turn into the wall
-      analogWrite(EnablePin_1, val_1 - 10);
+      analogWrite(EnablePin_1, val_1 - 30);
       analogWrite(EnablePin_2, val_2);
-      if ((front_left_bump > threshold) && (front_right_bump < threshold)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
+      if ((front_left_bump > threshold) && (front_right_bump == threshold)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
+        Serial.println("Left Front hit");
         analogWrite(EnablePin_1, 0);
-        analogWrite(EnablePin_2, val_2 + 60);
+        analogWrite(EnablePin_2, val_2 + 50);
       }
-      if ((front_left_bump < threshold) && (front_right_bump > threshold)) { // if only one side is hit, stop that wheel on that side
+      if ((front_left_bump == threshold) && (front_right_bump > threshold)) { // if only one side is hit, stop that wheel on that side
+        Serial.println("Right Front hit");
         analogWrite(EnablePin_2, 0);
-        analogWrite(EnablePin_1, val_1 + 60);
+        analogWrite(EnablePin_1, val_1 + 50);
       }
       // Check if back bumper has been hit
       if ((front_left_bump > threshold) && (front_right_bump > threshold)) { // if front_bump is at 5V then it's been hit
-        Serial.println("Front Bump Hit");
+        Serial.println("Front Hit");
         // Stop the motors
         analogWrite(EnablePin_1, 0);
         analogWrite(EnablePin_2, 0);
@@ -172,13 +181,13 @@ void loop(){
         // Send a PWM signal with one offset to turn into the wall
         analogWrite(EnablePin_1, val_1 - 30);
         analogWrite(EnablePin_2, val_2);
-        if ((back_left_bump > threshold) && (back_right_bump < threshold)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
+        if ((back_left_bump > threshold) && (back_right_bump == threshold)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
           analogWrite(EnablePin_1, 0);
-          analogWrite(EnablePin_2, val_2 + 60);
+          analogWrite(EnablePin_2, val_2 + 50);
         }
-        if ((back_left_bump < threshold) && (back_right_bump > threshold)) { // if only one side is hit, stop that wheel on that side
+        if ((back_left_bump == threshold) && (back_right_bump > threshold)) { // if only one side is hit, stop that wheel on that side
           analogWrite(EnablePin_2, 0);
-          analogWrite(EnablePin_1, val_1 + 60);
+          analogWrite(EnablePin_1, val_1 + 50);
         }
         // Check if back bumper has been hit
         if ((back_left_bump > threshold) && (back_right_bump > threshold)) { // if back_bump is at 5V then it's been hit
@@ -221,7 +230,7 @@ void loop(){
         digitalWrite(DirPin_1,HIGH); // Left motor is backward
         digitalWrite(DirPin_2,HIGH);  // Right motor is forward
         analogWrite(EnablePin_1, val_1); // offset to rotate inward
-        analogWrite(EnablePin_2, val_2 - 100);
+        analogWrite(EnablePin_2, 0);
         // Check if timer is expired
         if (TMRArd_IsTimerExpired(timer_two)) {
           analogWrite(EnablePin_1, 0);  // turn off momentarily
@@ -246,15 +255,24 @@ void loop(){
       }
       break;
     case(Stop):
-      analogWrite(EnablePin_1, val_1 - 20); // low PWM to keep against wall
-      analogWrite(EnablePin_2, val_1 + 20); // low PWM to keep against wall
-      // Send to Cam
-      digitalWrite(LauncherPin,HIGH);
+      if ((front_left_bump > threshold) && (front_right_bump > threshold)) { // if front_bump is at 5V then it's been hit
+        Serial.println("Front Hit");
+        // Stop the motors
+        analogWrite(EnablePin_1, 0);
+        analogWrite(EnablePin_2, 0);
+      } else {
+        analogWrite(EnablePin_1, val_1 - 20); // low PWM to keep against wall
+        analogWrite(EnablePin_2, val_1 + 20); // low PWM to keep against wall
+      }
+      shooter.write(yaw);
+      // Send to Cam PWM signal
+      analogWrite(LauncherPin,150);
+      
       // Servo for Bumper
-      if ((TMRArd_IsTimerExpired(ServoTimer) || !TMRArd_IsTimerActive(ServoTimer))) {
-        turret.write(dir ? pos++ : pos--);
-        if (pos <= AngleLow || pos>=AngleHigh) dir = !dir;
-        TMRArd_InitTimer(ServoTimer,ServoPeriod);
+      if (TMRArd_IsTimerExpired(brb_timer)) {
+        turret.write(dir ? AngleLow: AngleHigh);
+        TMRArd_InitTimer(brb_timer,dir ? 500:2750);
+        dir = !dir; 
       }
       break;
     default:
@@ -262,4 +280,5 @@ void loop(){
   }
   // Update the current state and return
   CurrentState = NextState;
+    
 }
