@@ -34,7 +34,7 @@
 #define brb_timer       4
 
 // Time for certain states
-#define period_turn     200 // in ticks (1000 ticks = 1 sec)
+#define period_turn     100 // in ticks (1000 ticks = 1 sec) // prev 200
 #define forward_time    500 // in ticks
 #define stall_time      1000
 
@@ -161,7 +161,7 @@ void loop(){
         analogWrite(EnablePin_2, 0);
         analogWrite(EnablePin_1, val_1 + 50);
       }
-      // Check if back bumper has been hit
+      // Check if front bumper has been hit
       if ((front_left_bump > threshold) && (front_right_bump > threshold)) { // if front_bump is at 5V then it's been hit
         Serial.println("Front Hit");
         // Stop the motors
@@ -179,8 +179,8 @@ void loop(){
         digitalWrite(DirPin_1,HIGH);
         digitalWrite(DirPin_2,HIGH);
         // Send a PWM signal with one offset to turn into the wall
-        analogWrite(EnablePin_1, val_1 - 30);
-        analogWrite(EnablePin_2, val_2);
+        analogWrite(EnablePin_1, val_1 - 40); // prev faster with 20 offset
+        analogWrite(EnablePin_2, val_2 - 20);
         if ((back_left_bump > threshold) && (back_right_bump == threshold)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
           analogWrite(EnablePin_1, 0);
           analogWrite(EnablePin_2, val_2 + 50);
@@ -210,7 +210,7 @@ void loop(){
         // Set one wheel to backward and one wheel forward
         digitalWrite(DirPin_1,LOW); // Left motor is forward
         digitalWrite(DirPin_2,LOW);  // Right motor is forward
-        analogWrite(EnablePin_1, val_1-20);
+        analogWrite(EnablePin_1, val_1-15);  // prev 20
         analogWrite(EnablePin_2, val_2);
         // Check if timer is expired
         if (TMRArd_IsTimerExpired(timer_one)) {
@@ -246,8 +246,8 @@ void loop(){
         Serial.println("Driving Straight");
         digitalWrite(DirPin_1,LOW); // Left motor is forward
         digitalWrite(DirPin_2,LOW);  // Right motor is forward
-        analogWrite(EnablePin_1, val_1 - 5); // go slower here
-        analogWrite(EnablePin_2, val_2 + 15); // go slower here but run into the wall
+        analogWrite(EnablePin_1, val_1 - 30); // go slower here // prev - 5 
+        analogWrite(EnablePin_2, val_2 - 10); // go slower here but run into the wall prev + 15
         if ((front_right_bump > threshold) && (front_left_bump > threshold)) { // if front_bump is at 5V then it's been hit
           Serial.println("Front Bump Hit");
           NextState = Stop;
@@ -255,18 +255,31 @@ void loop(){
       }
       break;
     case(Stop):
+      // Send the cervo to the correct angle
+      shooter.write(yaw); Set the angle
+      // Send to Cam PWM signal
+      analogWrite(LauncherPin,150);
+      // Check if only one bumper hit on both sides
+      if ((front_left_bump > threshold) && (front_right_bump == threshold)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
+        Serial.println("Left Front hit");
+        analogWrite(EnablePin_1, 0);
+        analogWrite(EnablePin_2, val_2 + 50);
+      }
+      if ((front_left_bump == threshold) && (front_right_bump > threshold)) { // if only one side is hit, stop that wheel on that side
+        Serial.println("Right Front hit");
+        analogWrite(EnablePin_2, 0);
+        analogWrite(EnablePin_1, val_1 + 50);
+      }
+      // Check if both bumpers hit and set to zero, otherwise continue
       if ((front_left_bump > threshold) && (front_right_bump > threshold)) { // if front_bump is at 5V then it's been hit
         Serial.println("Front Hit");
         // Stop the motors
         analogWrite(EnablePin_1, 0);
         analogWrite(EnablePin_2, 0);
       } else {
-        analogWrite(EnablePin_1, val_1 - 20); // low PWM to keep against wall
-        analogWrite(EnablePin_2, val_1 + 20); // low PWM to keep against wall
+        analogWrite(EnablePin_1, val_1 - 30); // low PWM to keep against wall // prev - 20
+        analogWrite(EnablePin_2, val_1 + 30); // low PWM to keep against wall // prev + 20
       }
-      shooter.write(yaw);
-      // Send to Cam PWM signal
-      analogWrite(LauncherPin,150);
       
       // Servo for Bumper
       if (TMRArd_IsTimerExpired(brb_timer)) {
