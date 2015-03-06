@@ -1,6 +1,9 @@
 /**************************************************************
   File:     Drive_Stage.ino
-  Contents:  
+  Contents: This program runs through the entire state machine
+            that parks the robot in the corner, starts the
+            servos and puts the shooter servo into position
+            and begins the cam to start shooting
 
 /*---------------- Includes ---------------------------------*/
 #include <Timers.h>
@@ -35,7 +38,7 @@
 
 // Time for certain states
 #define period_turn     100 // in ticks (1000 ticks = 1 sec) // prev 200
-#define forward_time    500 // in ticks
+#define forward_time    1000 // in ticks
 #define stall_time      1000
 
 /*---------------- Servo ---------------------------------*/
@@ -149,8 +152,8 @@ void loop(){
       digitalWrite(DirPin_1,LOW);
       digitalWrite(DirPin_2,LOW);
       // Send a PWM signal with one offset to turn into the wall
-      analogWrite(EnablePin_1, val_1 - 30);
-      analogWrite(EnablePin_2, val_2);
+      analogWrite(EnablePin_1, val_1 - 42);
+      analogWrite(EnablePin_2, val_2 - 20);
       if ((front_left_bump > threshold) && (front_right_bump == threshold)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
         Serial.println("Left Front hit");
         analogWrite(EnablePin_1, 0);
@@ -179,8 +182,8 @@ void loop(){
         digitalWrite(DirPin_1,HIGH);
         digitalWrite(DirPin_2,HIGH);
         // Send a PWM signal with one offset to turn into the wall
-        analogWrite(EnablePin_1, val_1 - 40); // prev faster with 20 offset
-        analogWrite(EnablePin_2, val_2 - 20);
+        analogWrite(EnablePin_1, val_1 - 55); // prev faster with 20 offset
+        analogWrite(EnablePin_2, val_2 - 25);
         if ((back_left_bump > threshold) && (back_right_bump == threshold)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
           analogWrite(EnablePin_1, 0);
           analogWrite(EnablePin_2, val_2 + 50);
@@ -210,8 +213,8 @@ void loop(){
         // Set one wheel to backward and one wheel forward
         digitalWrite(DirPin_1,LOW); // Left motor is forward
         digitalWrite(DirPin_2,LOW);  // Right motor is forward
-        analogWrite(EnablePin_1, val_1-15);  // prev 20
-        analogWrite(EnablePin_2, val_2);
+        analogWrite(EnablePin_1, val_1-25);  // prev 20
+        analogWrite(EnablePin_2, val_2-10);
         // Check if timer is expired
         if (TMRArd_IsTimerExpired(timer_one)) {
           Serial.println("Timer Expired");
@@ -246,8 +249,8 @@ void loop(){
         Serial.println("Driving Straight");
         digitalWrite(DirPin_1,LOW); // Left motor is forward
         digitalWrite(DirPin_2,LOW);  // Right motor is forward
-        analogWrite(EnablePin_1, val_1 - 30); // go slower here // prev - 5 
-        analogWrite(EnablePin_2, val_2 - 10); // go slower here but run into the wall prev + 15
+        analogWrite(EnablePin_1, val_1 - 50); // go slower here // prev - 5 
+        analogWrite(EnablePin_2, val_2 - 20); // go slower here but run into the wall prev + 15
         if ((front_right_bump > threshold) && (front_left_bump > threshold)) { // if front_bump is at 5V then it's been hit
           Serial.println("Front Bump Hit");
           NextState = Stop;
@@ -256,7 +259,7 @@ void loop(){
       break;
     case(Stop):
       // Send the cervo to the correct angle
-      shooter.write(yaw); Set the angle
+      shooter.write(yaw); // Set the angle
       // Send to Cam PWM signal
       analogWrite(LauncherPin,150);
       // Check if only one bumper hit on both sides
@@ -293,5 +296,4 @@ void loop(){
   }
   // Update the current state and return
   CurrentState = NextState;
-    
 }
