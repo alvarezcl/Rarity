@@ -37,8 +37,8 @@
 #define brb_timer       4
 
 // Time for certain states
-#define period_turn     100 // in ticks (1000 ticks = 1 sec) // prev 200
-#define forward_time    1000 // in ticks
+#define period_turn     180 // in ticks (1000 ticks = 1 sec) // prev 200
+#define forward_time    1400 // in ticks
 #define stall_time      1000
 
 /*---------------- Servo ---------------------------------*/
@@ -148,7 +148,7 @@ void loop(){
   switch(CurrentState) {
     case(FirstForward):
       Serial.println("First forward.");
-      // Set to backward at some speed
+      // Set to forward at some speed
       digitalWrite(DirPin_1,LOW);
       digitalWrite(DirPin_2,LOW);
       // Send a PWM signal with one offset to turn into the wall
@@ -182,7 +182,7 @@ void loop(){
         digitalWrite(DirPin_1,HIGH);
         digitalWrite(DirPin_2,HIGH);
         // Send a PWM signal with one offset to turn into the wall
-        analogWrite(EnablePin_1, val_1 - 55); // prev faster with 20 offset
+        analogWrite(EnablePin_1, val_1 - 50); // prev faster with 20 offset
         analogWrite(EnablePin_2, val_2 - 25);
         if ((back_left_bump > threshold) && (back_right_bump == threshold)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
           analogWrite(EnablePin_1, 0);
@@ -214,7 +214,7 @@ void loop(){
         digitalWrite(DirPin_1,LOW); // Left motor is forward
         digitalWrite(DirPin_2,LOW);  // Right motor is forward
         analogWrite(EnablePin_1, val_1-25);  // prev 20
-        analogWrite(EnablePin_2, val_2-10);
+        analogWrite(EnablePin_2, val_2-5);
         // Check if timer is expired
         if (TMRArd_IsTimerExpired(timer_one)) {
           Serial.println("Timer Expired");
@@ -249,7 +249,7 @@ void loop(){
         Serial.println("Driving Straight");
         digitalWrite(DirPin_1,LOW); // Left motor is forward
         digitalWrite(DirPin_2,LOW);  // Right motor is forward
-        analogWrite(EnablePin_1, val_1 - 50); // go slower here // prev - 5 
+        analogWrite(EnablePin_1, val_1 - 55); // go slower here // prev - 5 
         analogWrite(EnablePin_2, val_2 - 20); // go slower here but run into the wall prev + 15
         if ((front_right_bump > threshold) && (front_left_bump > threshold)) { // if front_bump is at 5V then it's been hit
           Serial.println("Front Bump Hit");
