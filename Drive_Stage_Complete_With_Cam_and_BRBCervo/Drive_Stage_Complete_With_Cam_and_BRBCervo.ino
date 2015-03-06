@@ -148,7 +148,7 @@ void loop(){
   switch(CurrentState) {
     case(FirstForward):
       Serial.println("First forward.");
-      // Set to backward at some speed
+      // Set to forward at some speed
       digitalWrite(DirPin_1,LOW);
       digitalWrite(DirPin_2,LOW);
       // Send a PWM signal with one offset to turn into the wall
