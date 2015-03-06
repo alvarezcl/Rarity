@@ -3,17 +3,13 @@
 #include "Servo.h"
 #include "Timers.h"
 
-// BUMPERS
-#define BACK_RIGHT       10
-#define FRONT_RIGHT      11
-#define FRONT_LEFT       9
-#define BACK_LEFT        8
-
 // TANK DRIVE
 #define EN_LEFT          6   // Connected to E1 (Enable Pin) on L293
 #define DIR_LEFT         7   // Connected to D1 (Direction Pin) on L293
 #define EN_RIGHT         5   // Connected to E2 (Enable Pin) on L293
 #define DIR_RIGHT        4  // Connected to D2 (Direction Pin) on L293
+#define TURN_DURATION    100
+#define FORWARD_DURATION 1000
 
 // SHOOTER/LAUNCHER/TURRET/BRB
 #define CAM_PIN          3 // Cam pin
@@ -23,53 +19,22 @@
 #define THREE_POINT      156 
 
 // BALL REQUEST
-#define REQUEST_PIN      13
-#define REQUEST_ON       0
-#define REQUEST_OFF      90
-#define REQUEST_TIMER    2 
-
-// STATES
-#define STATE_TIMER      1
-#define FIRST_FORWARD    9
-#define BACKING_UP       10
-#define TURNING          11
-#define DRIVING_STRAIGHT 12
-#define STOP             13
-#define SLIGHT_FORWARD   14
+#define REQUEST_PIN          13
+#define REQUEST_ON           0
+#define REQUEST_OFF          90
+#define REQUEST_TIMER        2
+#define REQUEST_DURATION_ON  500 // ms
+#define REQUEST_DURATION_OFF 2650 // ms
 
 // SERIAL
 #define PRINT_TIMER      0
 #define PRINT_DURATION   3000
-
-/*---------------- Time ----------------------------------
-// Timers
-#define timer_one       0
-#define timer_two       1
-#define stall_timer     2
-#define console_timer   3
-#define brb_timer       4
-
-// Time for certain states
-#define period_turn     100 // in ticks (1000 ticks = 1 sec) // prev 200
-#define forward_time    1000 // in ticks
-#define stall_time      1000
-
-/*---------------- States ----------------------------------*/
+#define MISC_TIMER       4
 
 Rarity::Rarity(void) {
-  Serial.begin(9600);
-  Serial.println("Starting Rarity...");
-  
-  shooter = new Servo;
-  shooter.attach(SHOOTER_PIN);
-  shooter.write(STRAIGHT);
-  
-  request = new Servo;
-  request.attach(REQUEST_PIN);
-  request.write(REQUEST_OFF);
+  requesting = false;
   
   pinMode(CAM_PIN, OUTPUT);       // Cam
-  digitalWrite(CAM_PIN, LOW);
   
   pinMode(BACK_RIGHT, INPUT);                 
   pinMode(FRONT_RIGHT, INPUT);
@@ -81,15 +46,40 @@ Rarity::Rarity(void) {
   pinMode(EN_RIGHT, OUTPUT);      // sets digital pin 5 as output
   pinMode(DIR_RIGHT, OUTPUT);         // sets digital pin 4 as output
   
-  digitalWrite(DIR_LEFT, HIGH);      // Set L293 pin 7 as HIGH (Backward)
-  digitalWrite(DIR_RIGHT, HIGH);      // Set L293 pin 4 as HIGH (Backward)
+  state = FIRST_FORWARD;
   
-  TMRArd_InitTimer(PRINT_TIMER,PRINT_DURATION);
+  //TMRArd_InitTimer(PRINT_TIMER,PRINT_DURATION); 
+  //Serial.println("Starting Constructor Rarity...");
 }
 
-void Rarity::setDriveSpeed(char left, char right) {
-  analogWrite(EN_LEFT,left);
-  analogWrite(EN,RIGHT,right);
+Rarity::~Rarity(void) {
+  //delete turret;
+  //delete request;
+}
+
+void Rarity::initialize(void) {
+  turret.attach(TURRET_PIN);
+  turret.write(STRAIGHT);
+  request.attach(REQUEST_PIN); 
+  request.write(REQUEST_OFF);
+  
+  digitalWrite(EN_LEFT, LOW);
+  digitalWrite(EN_RIGHT, LOW);
+  digitalWrite(CAM_PIN, LOW);
+  digitalWrite(DIR_LEFT, HIGH);      // Set L293 pin 7 as HIGH (Backward)
+  digitalWrite(DIR_RIGHT, HIGH);      // Set L293 pin 4 as HIGH (Backward)
+}
+
+void Rarity::setDriveSpeed(int left, int right) {
+  digitalWrite(DIR_LEFT, left < 0);
+  digitalWrite(DIR_RIGHT, right < 0);
+  analogWrite(EN_LEFT, left < 0 ? -left : left);
+  analogWrite(EN_RIGHT, right < 0 ? -right : right);
+}
+
+void Rarity::setDriveMotor(char pin, int speed) {
+  digitalWrite(pin, speed < 0);
+  analogWrite(pin, speed < 0 ? -speed : speed);
 }
 
 boolean Rarity::isBumperHit(char bumper) {
@@ -97,21 +87,41 @@ boolean Rarity::isBumperHit(char bumper) {
 }
 
 boolean Rarity::isReady(void) {
-  return TMRArd_IsTimerExpired(STATE_TIMER);
+  return TMRArd_IsTimerExpired(STATE_TIMER) || !TMRArd_IsTimerActive(STATE_TIMER);
 }
 
-void Rarity::setShooterAngle(char angle) {
-  shooter.write(angle);
+void Rarity::setShooterAngle(int angle) {
+  turret.write(angle);
 }
 
-void Rarity::setShooterPower(char power) {
+void Rarity::setShooterPower(int power) {
   analogWrite(CAM_PIN,power);
 }
 
-void Rarity::setBallRequestRate(int touch, int hold) {
-  
+void Rarity::updateBallRequest(void) {
+  if(TMRArd_IsTimerExpired(REQUEST_TIMER) || !TMRArd_IsTimerActive(REQUEST_TIMER)) {
+    request.write(requesting ? REQUEST_OFF : REQUEST_ON);
+    TMRArd_InitTimer(REQUEST_TIMER,requesting ? REQUEST_DURATION_OFF : REQUEST_DURATION_ON);
+    requesting = !requesting;
+  }
 }
 
-void Rarity::transitionToState(char next) {
-
+void Rarity::transitionToState(char next, int duration) {
+  state = next;
+  setDriveSpeed(0,0);
+  TMRArd_InitTimer(STATE_TIMER,STATE_DELAY);
+  if (duration > 0) TMRArd_InitTimer(MISC_TIMER,duration + STATE_DELAY);
 }
+
+char Rarity::getState(void) {
+  return state;
+}
+
+void Rarity::setTimer(int duration) {
+  TMRArd_InitTimer(MISC_TIMER,duration);
+}
+
+TMRArdReturn_t Rarity::isTimerExpired(void) {
+  return TMRArd_IsTimerExpired(MISC_TIMER);
+}
+

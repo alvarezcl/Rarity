@@ -17,7 +17,7 @@ void loop() {
   switch(rarity.getState()) {
     case (FIRST_FORWARD):
       Serial.println("First forward.");
-      rarity.setDriveSpeed(158,180);
+      rarity.setDriveSpeed(REF_SPEED-42,REF_SPEED-20);
       if (rarity.isBumperHit(FRONT_LEFT) && !rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
         Serial.println("Left Front hit");
         rarity.setDriveSpeed(0,250);
