@@ -20,11 +20,11 @@ void loop() {
       rarity.setDriveSpeed(REF_SPEED-42,REF_SPEED-20);
       if (rarity.isBumperHit(FRONT_LEFT) && !rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
         Serial.println("Left Front hit");
-        rarity.setDriveSpeed(0,250);
+        rarity.setDriveSpeed(0,REF_SPEED+50);
       }
       if (!rarity.isBumperHit(FRONT_LEFT) && rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
-        Serial.println("Left Front hit");
-        rarity.setDriveSpeed(250,0);
+        Serial.println("Right Front hit");
+        rarity.setDriveSpeed(REF_SPEED+50,0);
       }
       if (rarity.isBumperHit(FRONT_LEFT) && rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
         Serial.println("Front hit");
@@ -33,12 +33,12 @@ void loop() {
       break;
     case (BACKING_UP):
       Serial.println("Backing Up");
-      rarity.setDriveSpeed(-145,-175);
+      rarity.setDriveSpeed(-(REF_SPEED-55),-(REF_SPEED-25));
       if (rarity.isBumperHit(BACK_LEFT) && !rarity.isBumperHit(BACK_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
-          rarity.setDriveSpeed(0,-250);
+          rarity.setDriveSpeed(0,-(REF_SPEED+50);
       }
       if (!rarity.isBumperHit(BACK_LEFT) && rarity.isBumperHit(BACK_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
-          rarity.setDriveSpeed(-250,0);
+          rarity.setDriveSpeed(-(REF_SPEED+50),0);
       }
       if (rarity.isBumperHit(BACK_LEFT) && rarity.isBumperHit(BACK_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
           rarity.transitionToState(SLIGHT_FORWARD,FORWARD_DURATION);
@@ -48,7 +48,7 @@ void loop() {
       break;
     case (SLIGHT_FORWARD):
       Serial.println("Slight Forward");
-      rarity.setDriveSpeed(175,190);
+      rarity.setDriveSpeed(REF_SPEED-25,REF_SPEED-10);
       if(rarity.isTimerExpired()) {
         Serial.println("Timer Expired");
         rarity.transitionToState(TURNING,TURN_DURATION);
@@ -56,7 +56,7 @@ void loop() {
       break; 
     case (TURNING):
       Serial.println("Turning");
-      rarity.setDriveSpeed(-200,0);
+      rarity.setDriveSpeed(0,REF_SPEED);
       if(rarity.isTimerExpired()) {
         Serial.println("Timer Expired");
         rarity.transitionToState(DRIVING_STRAIGHT,0);
@@ -64,7 +64,15 @@ void loop() {
       break; 
     case (DRIVING_STRAIGHT):
       Serial.println("Driving Straight");
-      rarity.setDriveSpeed(150,180);
+      rarity.setDriveSpeed(REF_SPEED-55,REF_SPEED-25);
+      if (rarity.isBumperHit(FRONT_LEFT) && !rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
+        Serial.println("Left Front hit");
+        rarity.setDriveSpeed(0,REF_SPEED+50);
+      }
+      if (!rarity.isBumperHit(FRONT_LEFT) && rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
+        Serial.println("Right Front hit");
+        rarity.setDriveSpeed(REF_SPEED+50,0);
+      }
       if (rarity.isBumperHit(FRONT_LEFT) && rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
           Serial.println("Front Bump Hit");
           rarity.transitionToState(STOP,0);
@@ -93,6 +101,4 @@ void loop() {
     default:
       break;
   }
-
 }
-
