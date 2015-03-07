@@ -56,7 +56,7 @@ class Rarity {
 
     void updateBallRequest(void); // time in ms
 
-    void transitionToState(char next, int duration); // have #defines for state names
+    void transitionToState(char next, int duration = 0); // have #defines for state names
     
     char getState(void);
     
