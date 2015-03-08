@@ -5,7 +5,7 @@
 Rarity rarity;
 
 void setup() {
-  Serial.begin(9600);
+  //Serial.begin(9600);
   rarity.initialize();
 }
 
@@ -14,17 +14,17 @@ void loop() {
   
   switch(rarity.getState()) {
     case (FIRST_FORWARD):
-      Serial.println("First forward.");
+      //Serial.println("First forward.");
       if (rarity.isBumperHit(FRONT_LEFT) && !rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
-        Serial.println("Left Front hit");
+        //Serial.println("Left Front hit");
         rarity.setDriveSpeed(0,REF_SPEED+50);
       }
       else if (!rarity.isBumperHit(FRONT_LEFT) && rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
-        Serial.println("Right Front hit");
+        //Serial.println("Right Front hit");
         rarity.setDriveSpeed(REF_SPEED+50,0);
       }
       else if (rarity.isBumperHit(FRONT_LEFT) && rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
-        Serial.println("Front hit");
+        //Serial.println("Front hit");
         rarity.transitionToState(BACKING_UP);
       }
       else {
@@ -33,9 +33,9 @@ void loop() {
       break;
       
     case (BACKING_UP):
-      Serial.println("Backing Up");
+      //Serial.println("Backing Up");
       if (rarity.isBumperHit(BACK_LEFT) && !rarity.isBumperHit(BACK_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
-        rarity.setDriveSpeed(0,-(REF_SPEED+50);
+        rarity.setDriveSpeed(0,-(REF_SPEED+50));
       }
       else if (!rarity.isBumperHit(BACK_LEFT) && rarity.isBumperHit(BACK_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
         rarity.setDriveSpeed(-(REF_SPEED+50),0);
@@ -44,40 +44,40 @@ void loop() {
         rarity.transitionToState(SLIGHT_FORWARD,FORWARD_DURATION);
       }
       else {
-        rarity.setDriveSpeed(-(REF_SPEED-55),-(REF_SPEED-25));
+        rarity.setDriveSpeed(-(REF_SPEED-45),-(REF_SPEED-15));
       }
       break;
       
     case (SLIGHT_FORWARD):
-      Serial.println("Slight Forward");
+      //Serial.println("Slight Forward");
       rarity.setDriveSpeed(REF_SPEED-25,REF_SPEED-10);
       if(rarity.isTimerExpired()) {
-        Serial.println("Timer Expired");
+        //Serial.println("Timer Expired");
         rarity.transitionToState(TURNING,TURN_DURATION);
       }
       break;
       
     case (TURNING):
-      Serial.println("Turning");
+      //Serial.println("Turning");
       rarity.setDriveSpeed(0,REF_SPEED);
       if(rarity.isTimerExpired()) {
-        Serial.println("Timer Expired");
+        //Serial.println("Timer Expired");
         rarity.transitionToState(DRIVING_STRAIGHT);
       }
       break;
       
     case (DRIVING_STRAIGHT):
-      Serial.println("Driving Straight");
+      //Serial.println("Driving Straight");
       if (rarity.isBumperHit(FRONT_LEFT) && !rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
-        Serial.println("Left Front hit");
+        //Serial.println("Left Front hit");
         rarity.setDriveSpeed(0,REF_SPEED+50);
       }
       else if (!rarity.isBumperHit(FRONT_LEFT) && rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
-        Serial.println("Right Front hit");
+        //Serial.println("Right Front hit");
         rarity.setDriveSpeed(REF_SPEED+50,0);
       }
       else if (rarity.isBumperHit(FRONT_LEFT) && rarity.isBumperHit(FRONT_RIGHT)) { // if only one side is hit, stop that wheel on that side and drive hard on the other
-        Serial.println("Front Bump Hit");
+        //Serial.println("Front Bump Hit");
         rarity.transitionToState(STOP);
       }
       else {
@@ -86,9 +86,9 @@ void loop() {
       break;
       
     case (STOP):
-      Serial.println("Stop");
+      //Serial.println("Stop");
       rarity.setShooterAngle(TWO_POINT);
-      rarity.setShooterPower(150);
+      rarity.setShooterPower(125);
       rarity.updateBallRequest();
       
       if (rarity.isBumperHit(FRONT_LEFT)) {

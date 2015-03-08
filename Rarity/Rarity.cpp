@@ -14,7 +14,7 @@
 // SHOOTER/LAUNCHER/TURRET/BRB
 #define CAM_PIN          3 // Cam pin
 #define TURRET_PIN       12 // servo
-#define STRAIGHT         92
+#define STRAIGHT         101
 #define TWO_POINT        135
 #define THREE_POINT      156 
 
@@ -30,6 +30,7 @@
 #define PRINT_TIMER      0
 #define PRINT_DURATION   3000
 #define MISC_TIMER       4
+#define TWO_MINUTES      130000
 
 Rarity::Rarity(void) {
   requesting = false;
@@ -73,8 +74,8 @@ void Rarity::initialize(void) {
 void Rarity::setDriveSpeed(int left, int right) {
   digitalWrite(DIR_LEFT, left < 0);
   digitalWrite(DIR_RIGHT, right < 0);
-  analogWrite(EN_LEFT, left < 0 ? -left : left);
   analogWrite(EN_RIGHT, right < 0 ? -right : right);
+  analogWrite(EN_LEFT, left < 0 ? -left : left);
 }
 
 void Rarity::setDriveMotor(char pin, int speed) {
@@ -87,6 +88,12 @@ boolean Rarity::isBumperHit(char bumper) {
 }
 
 boolean Rarity::isReady(void) {
+  if (TMRArd_GetTime() >= TWO_MINUTES) {
+    setDriveSpeed(0,0);
+    setShooterPower(0);
+    state = GAME_OVER;
+    return false;
+  }
   return TMRArd_IsTimerExpired(STATE_TIMER) || !TMRArd_IsTimerActive(STATE_TIMER);
 }
 
@@ -121,7 +128,7 @@ void Rarity::setTimer(int duration) {
   TMRArd_InitTimer(MISC_TIMER,duration);
 }
 
-TMRArdReturn_t Rarity::isTimerExpired(void) {
+boolean Rarity::isTimerExpired(void) {
   return TMRArd_IsTimerExpired(MISC_TIMER);
 }
 

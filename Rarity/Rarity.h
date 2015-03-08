@@ -7,21 +7,22 @@
 
 // STATE
 #define STATE_TIMER      1
-#define STATE_DELAY      1000 //ms
+#define STATE_DELAY      750 //ms
 #define FIRST_FORWARD    9
 #define BACKING_UP       10
 #define TURNING          11
 #define DRIVING_STRAIGHT 12
 #define STOP             13
 #define SLIGHT_FORWARD   14
+#define GAME_OVER        15
 
 // TANK DRIVE
 #define EN_LEFT          6   // Connected to E1 (Enable Pin) on L293
 #define DIR_LEFT         7   // Connected to D1 (Direction Pin) on L293
 #define EN_RIGHT         5   // Connected to E2 (Enable Pin) on L293
 #define DIR_RIGHT        4  // Connected to D2 (Direction Pin) on L293
-#define TURN_DURATION    100
-#define FORWARD_DURATION 1000
+#define TURN_DURATION    200
+#define FORWARD_DURATION 1100
 #define REF_SPEED        200
 
 // BUMPERS
@@ -62,10 +63,8 @@ class Rarity {
     
     void setTimer(int duration);
     
-    TMRArdReturn_t isTimerExpired(void);
+    boolean isTimerExpired(void);
     
-    //Servo turret;
-
   private:
     
     char state;
